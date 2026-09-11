@@ -1,0 +1,143 @@
+# =============================================================================
+#  mission.yaml — Swarm Mission Parameters
+#  Location: swarm_bringup/config/mission.yaml
+#
+#  This file is the SINGLE SOURCE OF TRUTH for all tunable mission parameters.
+#  Edit this file to change the swarm's behaviour — no C++ recompilation needed.
+#  Loaded by swarm_drones.launch.py and applied to all drone controller nodes.
+# =============================================================================
+
+/**:
+  ros__parameters:
+
+    # ── Target Altitude ───────────────────────────────────────────────────
+    # Target takeoff altitude. Negative in NED = upward. -15.0 = 15 metres above ground.
+    target_altitude: -15.0   # [m]
+
+    # ── Cruise speed ───────────────────────────────────────────────────────
+    # Maximum speed the controller commands in position setpoints [m/s].
+    # The trajectory rate-limiter in swarm_controller_base uses this to slide
+    # setpoints smoothly rather than jumping — lower = slower/smoother flight.
+    cruise_speed: 2.0     # [m/s]
+
+    # ── Safety envelope ────────────────────────────────────────────────────
+    # APF repulsion activates when any peer is within safe_radius.
+    # Keep safe_radius >= 5.0 m per design spec.
+    safe_radius: 2.5        # [m] minimum inter-drone gap
+
+    # APF repulsion gain — higher values push drones apart more aggressively.
+    # Tune if drones oscillate (lower) or get too close (raise).
+    apf_gain: 1.5
+
+    # ── Heartbeat / fault detection ────────────────────────────────────────
+    # Peer marked as FAILED if no message received within this window.
+    peer_timeout: 1.5       # [s]
+
+    # ── Arrival Tolerance ──────────────────────────────────────────────────
+    reach_tolerance: 0.8      # [m] distance threshold to consider waypoint reached
+
+    # ── Circular Waypoints Mission (10m Radius Circle) ──────────────────────
+    # Points calculated using x = R*cos(theta), y = R*sin(theta) for theta = 0, 45, 90...
+    # Loop closes back at (10.0, 0.0). All coordinates are local offsets.
+    waypoints_x: [10.0,  7.07,  0.0, -7.07, -10.0, -7.07,  0.0,  7.07, 10.0]
+    waypoints_y: [ 0.0,  7.07, 10.0,  7.07,  0.0, -7.07, -10.0, -7.07,  0.0]
+    waypoints_z: [-15.0, -15.0, -15.0, -15.0, -15.0, -15.0, -15.0, -15.0, -15.0]
+
+# =============================================================================
+#  swarm_arming_manager — Pre-arm safety checks & arming sequencer
+#
+#  Runs BEFORE any drone arms. Verifies mesh health, then sends arm
+#  clearance to all drones and signals mission_ready to the waypoint node.
+# =============================================================================
+swarm_arming_manager:
+  ros__parameters:
+
+    # Total number of drones in the swarm.
+    num_drones: 3
+
+    # Consecutive messages required from each drone to pass mesh check.
+    # At 10 Hz broadcast rate: 15 msgs = 1.5 seconds of stable visibility.
+    # Increase if you want a longer stability window before arming.
+    stability_msgs: 15
+
+    # Minimum EMA link quality (0.0–1.0) required from each drone.
+    # 0.70 = at least 70% of messages must be arriving reliably.
+    link_quality_min: 0.70
+
+    # How long (seconds) to wait for all drones to confirm armed
+    # after the arm clearance is sent. If exceeded → FAULT state.
+    arm_timeout_s: 15.0
+
+# =============================================================================
+#  surveillance_drone_N — Surveillance mission parameters
+#
+#  All three surveillance drone nodes share these parameters.
+#  The area is divided automatically among alive drones at mission start.
+# =============================================================================
+
+# Apply to all surveillance drone nodes via wildcard
+/surveillance_drone_1:
+  ros__parameters:
+    # ── Takeoff / hover altitude (used during climb) ─────────────────
+    target_altitude: -15.0    # [m] NED (negative = up), 15m AGL
+
+    # ── Survey area — 1 acre ≈ 63.6m × 63.6m ────────────────────────
+    # NED frame: x=North, y=East. Origin is the SW corner of the area.
+    # Set survey_area_origin_y negative to centre on spawn point.
+    survey_area_origin_x:  0.0     # [m] North origin
+    survey_area_origin_y:  0.0     # [m] East origin
+    survey_area_x:        63.6     # [m] North extent  (~1 acre square)
+    survey_area_y:        63.6     # [m] East extent   (~1 acre square)
+
+    # ── Lawnmower pattern ────────────────────────────────────────────
+    # Spacing between parallel North-South passes within each zone.
+    # Smaller = higher coverage, more passes. Typical camera FOW: 5-15m.
+    swath_width:          10.0     # [m]
+
+    # ── Survey altitude ──────────────────────────────────────────────
+    # Fly higher than target_altitude_ for wider camera footprint.
+    survey_altitude:     -20.0     # [m] NED — 20m AGL
+
+    # ── Speed ───────────────────────────────────────────────────────
+    survey_speed:          3.0     # [m/s] — faster than hover default
+
+    # ── After survey ─────────────────────────────────────────────────
+    return_home_after:   true      # fly home & land when zone is complete
+
+    # ── Safety (inherited from base) ─────────────────────────────────
+    safe_radius:           5.0
+    apf_gain:              1.5
+    spawn_x:               0.0
+    spawn_y:               0.0
+
+/surveillance_drone_2:
+  ros__parameters:
+    target_altitude:     -15.0
+    survey_area_origin_x:  0.0
+    survey_area_origin_y:  0.0
+    survey_area_x:        63.6
+    survey_area_y:        63.6
+    swath_width:          10.0
+    survey_altitude:     -20.0
+    survey_speed:          3.0
+    return_home_after:   true
+    safe_radius:           5.0
+    apf_gain:              1.5
+    spawn_x:               0.0
+    spawn_y:               7.0    # 7m East separation from Drone 1
+
+/surveillance_drone_3:
+  ros__parameters:
+    target_altitude:     -15.0
+    survey_area_origin_x:  0.0
+    survey_area_origin_y:  0.0
+    survey_area_x:        63.6
+    survey_area_y:        63.6
+    swath_width:          10.0
+    survey_altitude:     -20.0
+    survey_speed:          3.0
+    return_home_after:   true
+    safe_radius:           5.0
+    apf_gain:              1.5
+    spawn_x:               0.0
+    spawn_y:              14.0    # 14m East separation from Drone 1

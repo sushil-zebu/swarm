@@ -1,0 +1,5 @@
+float32 x               # Local NED position X (North, metres)
+float32 y               # Local NED position Y (East, metres)
+float32 z               # Local NED position Z (Down, metres; negative = up)
+float32 speed           # Desired flight speed (m/s)
+float32 hold_time_s     # Hover duration at target waypoint (seconds)

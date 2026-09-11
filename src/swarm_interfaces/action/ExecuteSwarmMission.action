@@ -1,0 +1,17 @@
+# Goal
+uint8 drone_id
+string mission_name
+WaypointItem[] waypoints
+---
+# Result
+bool success
+uint32 waypoints_completed
+float32 total_flight_time_s
+string message
+---
+# Feedback
+uint32 current_waypoint_idx
+uint32 total_waypoints
+float32 distance_to_target
+float32 progress_pct
+string status_text

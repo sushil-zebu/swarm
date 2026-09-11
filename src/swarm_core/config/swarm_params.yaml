@@ -1,0 +1,79 @@
+/**:
+  ros__parameters:
+    num_drones: 4
+    safe_radius: 2.0
+    position_uncertainty: 0.3
+    control_delay_s: 0.15
+    max_speed_mps: 3.0
+    max_brake_mps2: 2.0
+    goal_gain: 1.0
+    cbf_alpha: 1.5
+    # Safety solver: account for stale-state acceleration, solve all peer
+    # constraints together with the speed limit, and stop if any peer is lost.
+    peer_accel_uncertainty_mps2: 2.0
+    cbf_constraint_tolerance_mps: 0.02
+    cbf_projection_iterations: 80
+    cbf_fail_closed_on_peer_loss: true
+    reach_tol: 0.5
+    peer_timeout: 1.5
+    # Normal fleet launch arms once and starts the mission. Enable only for a
+    # deliberate bench/SITL motor arm-disarm check before the real mission arm.
+    preflight_check: false
+
+    # false: each decentralized controller arms itself after Offboard prestream.
+    # true: wait for /swarm/arm_clearance from swarm_arming_manager.
+    require_arm_clearance: false
+
+    # Final PX4-interface guardrails. Missions/CBF normally use the lower
+    # max_speed_mps above; no velocity setpoint can exceed 7m/s here.
+    px4_max_velocity_mps: 7.0
+    px4_max_acceleration_mps2: 3.0
+    # PX4 publishes VehicleStatus at 2Hz, so 1.0s allows one missed sample.
+    px4_status_timeout_s: 1.0
+    px4_command_ack_timeout_s: 0.75
+    px4_command_retry_interval_s: 1.0
+
+    # Three-drone vertical equilateral triangle mission. All three drones are active.
+    # Drone 2 is the apex at 10m. Drones 1 and 3 form the upper horizontal
+    # base at 10 + sqrt(3)/2*5 = 14.330m.
+    triangle_middle_drone_id: 2
+    triangle_takeoff_height_m: 10.0
+    triangle_side_length_m: 3.0
+    triangle_center_x: 7.0
+    triangle_center_y: 0.0
+    triangle_reference_z: 0.0
+    triangle_base_above_apex: true
+    triangle_reach_tol_m: 0.5
+    triangle_sync_tol_m: 0.8
+
+    # Once stable, the complete triangle moves +100m in Y with a shared sine
+    # altitude offset. Every 90 degrees of sine phase, a continuous 120-degree
+    # X-Z formation rotation completes the cyclic swap 1->2, 2->3, 3->1.
+    # Continuous rotation preserves the triangle side length during each swap.
+    # Altitude amplitude is always triangle_side_length_m.
+    triangle_formation_hold_s: 2.0
+    triangle_sine_travel_distance_m: 60.0
+    triangle_sine_wavelength_m: 12.5
+    triangle_sine_forward_speed_mps: 0.8
+
+    # Positive metres above stack_reference_z, indexed by drone_id - 1.
+    # Change this one list to set every drone's independent cruise height.
+    stack_reference_z: 0.0
+    cruise_altitudes_m: [5.0, 10.0, 15.0, 20.0]
+
+    # Shared XY trajectory. These values must be identical for every drone.
+    helix_center_x: 0.0
+    helix_center_y: 0.0
+    helix_radius_m: 3.0
+    helix_angular_speed_rad_s: 0.5
+
+    # Vertical helix profile. Height is positive metres above the Z reference.
+    helix_climb_accel_mps2: 0.5
+    helix_climb_max_vel_mps: 1.0
+    helix_max_height_m: 80.0
+
+    # Formation barriers between assembly, circle, and helix phases.
+    formation_sync_hold_s: 2.0
+    formation_sync_tol_m: 0.8
+    stability_msgs: 15
+    arm_timeout_s: 15.0
